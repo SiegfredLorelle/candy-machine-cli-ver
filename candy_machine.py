@@ -1,21 +1,81 @@
-from helpers import is_negative
+from helpers import is_negative, deposit_more
+import sys
 
 class Candy_Machine:
     
-    def program():
+    def __init__(self):
+        self.cash_register = Cash_Register()
+        self.candy_dispenser = Dispenser()
+        self.chip_dispenser = Dispenser()
+        self.gum_dispenser = Dispenser()
+        self.cookie_dispenser = Dispenser()
+
+    def __str__(self):
+        return f"CHOICE: {self.choice}"
+        
+    def program(self):
         """  """
     # TODO
 
-    def sell_product():
-        """  """
-    # TODO
 
-    def show_product():
-        """  """
-    # TODO
+    def sell_product(self):
+        """ sell the products selected by the customer """
+        print(self.choice.number_of_items)
+        if self.choice.number_of_items <= 0:
+            print("\nThe product is out of stock.")
+            return self.show_selection()
+
+        deposit = 0
+        while deposit < self.choice.cost:
+            try:
+                new_deposit = deposit_more(self.choice.cost - deposit)
+                if new_deposit == "q":
+                    return self.show_selection()
+                
+                deposit += int(new_deposit)
+            except KeyboardInterrupt:
+                sys.exit()
+            except:
+                print("Must deposit using positive integers. (Q - to cancel purchase)")
+        
+        # TODO SELL PRODUCT
+
+        # TODO ACCEPT MONEY, RETURN IF THEIR IS CHANGE
 
 
-class Cash_Register:
+
+
+
+
+
+
+
+    def show_selection(self):
+        """ displays the main menu, allow users to select and buy a product """
+        item_key = {"1": self.candy_dispenser, "2": self.chip_dispenser, "3": self.gum_dispenser, "4": self.cookie_dispenser, "Q": "exit"}
+
+        print("\nWelcome to \nMy Candy Machine")
+        print("\nSelect an item to purchase by entering its value")
+        print("1 - Candy \n2 - Chip \n3 - Gum \n4 - Cookie \nQ - Exit")
+        choice = input("\nYour choice:  ")[0].upper() 
+
+        if not choice or choice not in item_key:
+            return self.show_selection()
+
+        if choice == "exit":
+            sys.exit("\n'My Candy Machine' is turning off")
+
+        else:
+            self.choice = item_key[choice]
+            return self.sell_product()
+
+    
+
+
+        
+
+
+class Cash_Register():
 
     def __init__(self, cash_on_hand=500):
         self.cash_on_hand = cash_on_hand
@@ -100,6 +160,7 @@ class Dispenser:
 
     def dispenser(self, set_no_of_items, set_cost):
         """  """
+        # TODO
 
     def get_count(self):
         """ returns the number of items of a particular product """
@@ -121,6 +182,13 @@ class Dispenser:
 # a.accept_amount(5)
 # print(a)
 
-b = Dispenser(3, 5)
-b.makeSale()
-print(b.get_count())
+# b = Dispenser(3, 5)
+# b.makeSale()
+# print(b.get_count())
+
+c = Candy_Machine()
+
+c.candy_dispenser.number_of_items = 0
+c.show_selection()
+# print(c)
+# print(c.cash_register)
