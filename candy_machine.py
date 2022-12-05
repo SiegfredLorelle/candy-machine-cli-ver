@@ -2,6 +2,15 @@ import sys
 
 def main():
     candy_machine = Candy_Machine()
+
+    # Optional - edit values to in registers and dispensers
+    candy_machine.cash_register.cash_register(cash_in=10_000)
+    candy_machine.candy_dispenser.dispenser(set_cost=25, set_no_of_items=20)
+    candy_machine.chip_dispenser.dispenser(set_cost=25, set_no_of_items=20)
+    candy_machine.gum_dispenser.dispenser(set_cost=25, set_no_of_items=20)
+    candy_machine.cookie_dispenser.dispenser(set_cost=25, set_no_of_items=1)
+
+    print(candy_machine.candy_dispenser)
     candy_machine.program()
 
 
@@ -59,6 +68,7 @@ class Candy_Machine:
         elif self.choice == "view":
             print(f"\nCurrent balance in the candy machine: ${self.cash_register.current_balance():,.2f}")
             while True:
+                # Add a buffer to let owner read the current balance
                 if not input("\nPress enter to proceed:  "):
                     return self.program()
       
@@ -77,7 +87,11 @@ class Candy_Machine:
         # Ensure that the chosen item is not out of stock
         if self.choice["dispenser"].get_count() <= 0:
             print(f"\nSorry, {self.choice['item']} is out of stock")
-            return self.program()
+        
+        # Add a buffer to let customer read the out of stock msg
+            while True:
+                if not input("\nPress enter to proceed:  "):
+                    return self.program()
 
         # Get deposit from the customer until deposit is enough to pay the cost
         deposit = 0
@@ -150,12 +164,16 @@ class Cash_Register():
     def __str__(self):
         return f"Cash on hand is ${self.cash_on_hand:,.2f}"
 
+    def cash_register(self, cash_in=500):
+        """ Let candy machine modify cash on hand """
+        self.cash_on_hand = cash_in
+
     def current_balance(self):
-        """ shows the current amount in the cash register """
+        """ Shows the current amount in the cash register """
         return self.cash_on_hand
 
     def accept_amount(self, amount_in):
-        """ accepts the amount entered by the customer """
+        """ Accepts the amount entered by the customer """
         if isinstance(amount_in, int) and amount_in > 0:
             self.cash_on_hand += amount_in
         
@@ -164,7 +182,7 @@ class Cash_Register():
 
 
 class Dispenser:
-    """ component of Candy Machine, handles product """
+    """ Component of Candy Machine, handles product """
     def __init__(self, cost=50, number_of_items=50):
         self.cost = cost
         self.number_of_items = number_of_items
@@ -203,6 +221,11 @@ class Dispenser:
 
     def __str__(self):
         return f"Cost is ${self.cost:,.2f} and Number of Items is {self.number_of_items}"
+
+    def dispenser(self, set_cost=50, set_no_of_items=50):
+        """ Let candy machine modify number of items and cost of item """
+        self.cost = set_cost
+        self.number_of_items = set_no_of_items
 
     def get_count(self):
         """ returns the number of items of a particular product """
