@@ -3,12 +3,12 @@ import sys
 def main():
     candy_machine = Candy_Machine()
 
-    # Optional - edit values to in registers and dispensers
-    candy_machine.cash_register.cash_register(cash_in=10_000)
-    candy_machine.candy_dispenser.dispenser(set_cost=25, set_no_of_items=20)
-    candy_machine.chip_dispenser.dispenser(set_cost=25, set_no_of_items=20)
-    candy_machine.gum_dispenser.dispenser(set_cost=25, set_no_of_items=20)
-    candy_machine.cookie_dispenser.dispenser(set_cost=25, set_no_of_items=1)
+    """ Optional - uncomment then edit default values in registers and dispensers """
+    # candy_machine.cash_register.cash_register(cash_in=10_000)
+    # candy_machine.candy_dispenser.dispenser(set_cost=25, set_no_of_items=20)
+    # candy_machine.chip_dispenser.dispenser(set_cost=25, set_no_of_items=20)
+    # candy_machine.gum_dispenser.dispenser(set_cost=25, set_no_of_items=20)
+    # candy_machine.cookie_dispenser.dispenser(set_cost=25, set_no_of_items=1)
 
     print(candy_machine.candy_dispenser)
     candy_machine.program()
@@ -24,12 +24,22 @@ class Candy_Machine:
         self.gum_dispenser = Dispenser()
         self.cookie_dispenser = Dispenser()
         
+        # Key mapping in selection menu
         self.item_key = {"1": {"item": "candy", "dispenser": self.candy_dispenser},
                          "2": {"item": "chip", "dispenser": self.chip_dispenser},
                          "3": {"item": "gum", "dispenser": self.gum_dispenser},
                          "4": {"item": "cookie", "dispenser": self.cookie_dispenser},
-                         "Q": "exit",
-                         "V": "view"}
+                         "A": "admin",
+                         "Q": "exit"}
+
+        # Key mapping in admin menu
+        self.admin_key = {"1": {"item": "candy", "dispenser": self.candy_dispenser},
+                          "2": {"item": "chip", "dispenser": self.chip_dispenser},
+                          "3": {"item": "gum", "dispenser": self.gum_dispenser},
+                          "4": {"item": "cookie", "dispenser": self.cookie_dispenser},
+                          "V": "view_balance",
+                          "S": "set_balance",
+                          "Q": "back"}
 
     # Getter
     @property
@@ -44,6 +54,18 @@ class Candy_Machine:
         else:
             self._choice = self.item_key[choice]
 
+    # Getter
+    @property
+    def admin_choice(self):
+        return self._admin_choice
+
+    # Setter
+    @admin_choice.setter
+    def admin_choice(self, admin_choice):
+        if not admin_choice or admin_choice not in self.admin_key:
+            raise ValueError("Choice is not in admin key")
+        else:
+            self._admin_choice = self.admin_key[admin_choice]
 
     def program(self):
         """ Main Program """
@@ -64,14 +86,63 @@ class Candy_Machine:
         if self.choice == "exit":
             sys.exit(turn_off_msg)
 
-        # Let the owner view the current balance in the candy machine
-        elif self.choice == "view":
-            print(f"\nCurrent balance in the candy machine: ${self.cash_register.current_balance():,.2f}")
+
+
+        elif self.choice == "admin":
+            # Show menu intented for admin/owners
             while True:
-                # Add a buffer to let owner read the current balance
-                if not input("\nPress enter to proceed:  "):
-                    return self.program()
-      
+                try:
+                    self.show_admin_menu()
+                    if self.admin_choice:
+                        break
+
+                except (ValueError, IndexError):
+                    print("\n\nPlease select a proper item!")
+            
+            # Go back to selection menu if admin chooses to
+            if self.admin_choice == "back":
+                return self.program()
+
+            # Let the admin view the current balance in the candy machine
+            elif self.admin_choice == "view_balance":
+                print(f"\nCurrent balance in the candy machine: ${self.cash_register.current_balance():,.2f}")
+                while True:
+                    # Add a buffer to let admin read the current balance
+                    if not input("\nPress enter to proceed:  "):
+                        return self.program()
+
+            # Let admin change the current balance in the candy machine
+            elif self.admin_choice == "set_balance":
+                # Ensure input is valid
+                while True:
+                    try:
+                        cash_in = input("\nHow much cash should the candy machine have:  ")
+
+                        # Cancel if admin chooses to
+                        if cash_in[0].upper() == "Q":
+                            print("\nCash on candy machine wasn't changed.")
+                            # Add a buffer to let customer read the purchase succesful msg
+                            while True:
+                                if not input("\nPress enter to proceed:  "):
+                                    return self.program()
+
+                        cash_in = int(cash_in)
+                        if cash_in > 0:
+                            break
+                        else:
+                            print("Cash in candy machine must be a positive integer (Q - cancel)")
+
+                    except (IndexError, TypeError, ValueError):
+                        print("Cash in candy machine must be a positive integer (Q - cancel)")
+
+                # Set the new cash in register
+                self.cash_register.cash_register(cash_in)
+            
+            else:
+                ...
+
+
+
         # If user chose a product sell the product
         else:
             self.sell_product()
@@ -100,7 +171,7 @@ class Candy_Machine:
                 new_deposit = input(f"\nPlease insert ${self.choice['dispenser'].get_product_cost() - deposit} to buy a {self.choice['item']}:  ")
 
                 # Cancel the purchase if customer choose to
-                if new_deposit[0].lower() == "q":
+                if new_deposit[0].upper() == "Q":
                     print(f"\nCanceling your purchase for {self.choice['item']}")
 
                     # Return the deposited money by the customer
@@ -135,8 +206,14 @@ class Candy_Machine:
         """ displays the main menu, allow users to select an item to buy """
 
         print("\nSelect an item to purchase by entering its corresponding value")
-        print("1 - Candy \n2 - Chip \n3 - Gum \n4 - Cookie \nQ - Exit\nV - view balance (for owner only)")
+        print("1 - Candy \n2 - Chip \n3 - Gum \n4 - Cookie \n\nA - Admin Menu \nQ - Exit")
         self.choice = input("\nYour choice:  ")[0].upper() 
+
+    def show_admin_menu(self):
+        """ Allows owner to view and set balance in register, and set price and number of items """
+        print("\nAdmin Settings: Enter corresponding value")
+        print("1 - Set Candy \n2 - Set Chips \n3 - Set Gum \n4 - Set Cookies\nV - View Balance \nS - Set Balance \nQ - Back")
+        self.admin_choice = input("\nYour choice:  ")[0].upper() 
 
 
 class Cash_Register():
