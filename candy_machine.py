@@ -1,5 +1,10 @@
 import sys
 
+def main():
+    candy_machine = Candy_Machine()
+    candy_machine.program()
+
+
 class Candy_Machine:
 
     def __init__(self):
@@ -14,7 +19,8 @@ class Candy_Machine:
                          "2": {"item": "chip", "dispenser": self.chip_dispenser},
                          "3": {"item": "gum", "dispenser": self.gum_dispenser},
                          "4": {"item": "cookie", "dispenser": self.cookie_dispenser},
-                         "Q": "exit"}
+                         "Q": "exit",
+                         "V": "view"}
 
     # Getter
     @property
@@ -32,6 +38,7 @@ class Candy_Machine:
 
     def program(self):
         """ Main Program """
+        turn_off_msg = "\n'My Candy Machine' is turning off"
         print("\nWelcome to \nMy Candy Machine")
 
         # Shows the selection of items being sold
@@ -42,29 +49,41 @@ class Candy_Machine:
                     break
 
             except (ValueError, IndexError):
-                print("\nPlease select a proper item!")
+                print("\n\nPlease select a proper item!")
                 
         # Turn off candy machine if customer choose to
         if self.choice == "exit":
-            sys.exit("\n'My Candy Machine' is turning off")
+            sys.exit(turn_off_msg)
 
+        # Let the owner view the current balance in the candy machine
+        elif self.choice == "view":
+            print(f"\nCurrent balance in the candy machine: ${self.cash_register.current_balance():,.2f}")
+            while True:
+                if not input("\nPress enter to proceed:  "):
+                    return self.program()
+      
         # If user chose a product sell the product
         else:
-            return self.sell_product()
+            self.sell_product()
+
+        # Add a buffer to let customer read the purchase succesful msg
+        while True:
+            if not input("\nPress enter to proceed:  "):
+                return self.program()
 
 
     def sell_product(self):
         """ Sell the item selected by the customer """
         # Ensure that the chosen item is not out of stock
-        if self.choice["dispenser"].number_of_items <= 0:
+        if self.choice["dispenser"].get_count() <= 0:
             print(f"\nSorry, {self.choice['item']} is out of stock")
             return self.program()
 
         # Get deposit from the customer until deposit is enough to pay the cost
         deposit = 0
-        while deposit < self.choice["dispenser"].cost:
+        while deposit < self.choice['dispenser'].get_product_cost():
             try:
-                new_deposit = input(f"\nPlease insert ${self.choice['dispenser'].cost - deposit} to buy a {self.choice['item']}:  ")
+                new_deposit = input(f"\nPlease insert ${self.choice['dispenser'].get_product_cost() - deposit} to buy a {self.choice['item']}:  ")
 
                 # Cancel the purchase if customer choose to
                 if new_deposit[0].lower() == "q":
@@ -73,7 +92,6 @@ class Candy_Machine:
                     # Return the deposited money by the customer
                     if deposit != 0:
                         print(f"Here is the ${deposit:,.2f} you inserted")
-
                     return self.program()
                 
                 # Add the new deposit to total deposit
@@ -88,39 +106,23 @@ class Candy_Machine:
                 print("Must deposit using positive integers. (Q - cancel purchase)")
         
         # Give the item if deposit is enough
-        self.choice["dispenser"].number_of_items -= 1
-        print(f"\nHere is your {self.choice['item']}! Enjoy!")
+        self.choice["dispenser"].makeSale()
+        print(f"\nSuccessfully purchased a gum! Here is your {self.choice['item']}! Enjoy!")
 
         # Register takes in the payment (not total deposit, just the price of item)
-        self.cash_register.cash_on_hand += self.choice["dispenser"].cost
+        self.cash_register.accept_amount(self.choice['dispenser'].get_product_cost())
 
         # if there is change, return it
-        if  deposit != self.choice["dispenser"].cost:
-            print(f"Here also is your change of ${deposit - self.choice['dispenser'].cost}:,.2f")
-
-        # Asks customer if want to buy more
-        try:
-            if input("\nWould you like to purchase again? (y for yes):  ")[0].lower() == "y":
-                return self.program()
-        # Turn off the candy machine if customer will not buy anymore
-            else:
-                sys.exit("\n'My Candy Machine' is turning off")
-        except:
-            sys.exit("\n'My Candy Machine' is turning off")
+        if  deposit != self.choice['dispenser'].get_product_cost():
+            print(f"Here also is your change of ${deposit - self.choice['dispenser'].get_product_cost():,.2f}")
 
 
     def show_selection(self):
         """ displays the main menu, allow users to select an item to buy """
 
         print("\nSelect an item to purchase by entering its corresponding value")
-        print("\n1 - Candy \n2 - Chip \n3 - Gum \n4 - Cookie \nQ - Exit")
+        print("1 - Candy \n2 - Chip \n3 - Gum \n4 - Cookie \nQ - Exit\nV - view balance (for owner only)")
         self.choice = input("\nYour choice:  ")[0].upper() 
-
-
-    
-
-
-        
 
 
 class Cash_Register():
@@ -147,10 +149,6 @@ class Cash_Register():
 
     def __str__(self):
         return f"Cash on hand is ${self.cash_on_hand:,.2f}"
-
-    def cash_register(self, cash_in):
-        """ """
-        # TODO
 
     def current_balance(self):
         """ shows the current amount in the cash register """
@@ -181,8 +179,7 @@ class Dispenser:
     def cost(self, cost):
         if isinstance(cost, int):
             if cost < 0:
-                self._cost = 50 
-            
+                self._cost = 50
             else:
                 self._cost = cost 
         else:
@@ -199,7 +196,6 @@ class Dispenser:
         if isinstance(number_of_items, int):
             if number_of_items < 0:
                 self._number_of_items = 50 
-            
             else:
                 self._number_of_items = number_of_items 
         else:
@@ -207,10 +203,6 @@ class Dispenser:
 
     def __str__(self):
         return f"Cost is ${self.cost:,.2f} and Number of Items is {self.number_of_items}"
-
-    def dispenser(self, set_no_of_items, set_cost):
-        """  """
-        # TODO
 
     def get_count(self):
         """ returns the number of items of a particular product """
@@ -225,22 +217,5 @@ class Dispenser:
         self.number_of_items -= 1
 
 
-
-""" TESTINGS """
-# a = Cash_Register(1000)
-# a.accept_amount(3)
-# a.accept_amount(5)
-# print(a)
-
-# b = Dispenser(3, 5)
-# b.makeSale()
-# print(b.get_count())
-
-c = Candy_Machine()
-
-# c.candy_dispenser.number_of_items = 0
-# c.program()
-c.cash_register
-print(c.cash_register)
-# print(c)
-# print(c.cash_register)
+if __name__ == "__main__":
+	main()
