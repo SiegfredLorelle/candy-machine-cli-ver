@@ -8,7 +8,7 @@ def main():
     # candy_machine.candy_dispenser.dispenser(set_cost=25, set_no_of_items=20)
     # candy_machine.chip_dispenser.dispenser(set_cost=25, set_no_of_items=20)
     # candy_machine.gum_dispenser.dispenser(set_cost=25, set_no_of_items=20)
-    # candy_machine.cookie_dispenser.dispenser(set_cost=25, set_no_of_items=1)
+    # candy_machine.cookie_dispenser.dispenser(set_cost=25, set_no_of_items=20)
 
     print(candy_machine.candy_dispenser)
     candy_machine.program()
@@ -136,11 +136,45 @@ class Candy_Machine:
                         print("Cash in candy machine must be a positive integer (Q - cancel)")
 
                 # Set the new cash in register
+                print(f"Cash on the Candy Machine is set to {cash_in:,.2f}")
                 self.cash_register.cash_register(cash_in)
             
             else:
-                ...
+                while True:
+                    try:
+                        set_cost = input(f"\nHow much should a {self.admin_choice['item']} be:  ")
+                        # Cancel if admin chooses to
+                        if set_cost[0].upper() == "Q":
+                            print(f"Price and stock of {self.admin_choice['item']} must be a positive integer (Q - cancel)")
+                            # Add a buffer to let customer read the purchase succesful msg
+                            while True:
+                                if not input("\nPress enter to proceed:  "):
+                                    return self.program()
 
+                        set_cost = int(set_cost)
+
+                        set_no_of_items = input(f"How many stock of {self.admin_choice['item']} should be available:  ")
+
+                        # Cancel if admin chooses to
+                        if set_no_of_items[0].upper() == "Q":
+                            print(f"Price and stock of {self.admin_choice['item']} must be a positive integer (Q - cancel)")
+                            # Add a buffer to let customer read the purchase succesful msg
+                            while True:
+                                if not input("\nPress enter to proceed:  "):
+                                    return self.program()
+
+                        set_no_of_items = int(set_no_of_items)
+                        if set_cost > 0 and set_no_of_items > 0:
+                            break
+                        else:
+                            print(f"Price and stock of {self.admin_choice['item']} must be a positive integer (Q - cancel)")
+
+                    except (IndexError, TypeError, ValueError):
+                        print(f"Price and stock of {self.admin_choice['item']} must be a positive integer (Q - cancel)")
+
+                # Set the new cost and stock of an item
+                print(f"A {self.admin_choice['item']} now cost {set_cost:,.2f} and there are {set_no_of_items} stocks available")
+                self.chip_dispenser.dispenser(set_cost, set_no_of_items)
 
 
         # If user chose a product sell the product
@@ -212,7 +246,7 @@ class Candy_Machine:
     def show_admin_menu(self):
         """ Allows owner to view and set balance in register, and set price and number of items """
         print("\nAdmin Settings: Enter corresponding value")
-        print("1 - Set Candy \n2 - Set Chips \n3 - Set Gum \n4 - Set Cookies\nV - View Balance \nS - Set Balance \nQ - Back")
+        print("1 - Set Candy \n2 - Set Chips \n3 - Set Gum \n4 - Set Cookies\n\nV - View Balance \nS - Set Balance \nQ - Back")
         self.admin_choice = input("\nYour choice:  ")[0].upper() 
 
 
