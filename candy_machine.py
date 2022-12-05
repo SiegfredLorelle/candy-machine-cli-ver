@@ -1,73 +1,121 @@
-from helpers import is_negative, deposit_more
 import sys
 
 class Candy_Machine:
-    
+
     def __init__(self):
+        """ Initalize the components of candy machine """
         self.cash_register = Cash_Register()
         self.candy_dispenser = Dispenser()
         self.chip_dispenser = Dispenser()
         self.gum_dispenser = Dispenser()
         self.cookie_dispenser = Dispenser()
-
-    def __str__(self):
-        return f"CHOICE: {self.choice}"
         
+        self.item_key = {"1": {"item": "candy", "dispenser": self.candy_dispenser},
+                         "2": {"item": "chip", "dispenser": self.chip_dispenser},
+                         "3": {"item": "gum", "dispenser": self.gum_dispenser},
+                         "4": {"item": "cookie", "dispenser": self.cookie_dispenser},
+                         "Q": "exit"}
+
+    # Getter
+    @property
+    def choice(self):
+        return self._choice
+
+    # Setter
+    @choice.setter
+    def choice(self, choice):
+        if not choice or choice not in self.item_key:
+            raise ValueError("Choice is not in item key")
+        else:
+            self._choice = self.item_key[choice]
+
+
     def program(self):
-        """  """
-    # TODO
+        """ Main Program """
+        print("\nWelcome to \nMy Candy Machine")
+
+        # Shows the selection of items being sold
+        while True:
+            try:
+                self.show_selection()
+                if self.choice:
+                    break
+
+            except (ValueError, IndexError):
+                print("\nPlease select a proper item!")
+                
+        # Turn off candy machine if customer choose to
+        if self.choice == "exit":
+            sys.exit("\n'My Candy Machine' is turning off")
+
+        # If user chose a product sell the product
+        else:
+            return self.sell_product()
 
 
     def sell_product(self):
-        """ sell the products selected by the customer """
-        print(self.choice.number_of_items)
-        if self.choice.number_of_items <= 0:
-            print("\nThe product is out of stock.")
-            return self.show_selection()
+        """ Sell the item selected by the customer """
+        # Ensure that the chosen item is not out of stock
+        if self.choice["dispenser"].number_of_items <= 0:
+            print(f"\nSorry, {self.choice['item']} is out of stock")
+            return self.program()
 
+        # Get deposit from the customer until deposit is enough to pay the cost
         deposit = 0
-        while deposit < self.choice.cost:
+        while deposit < self.choice["dispenser"].cost:
             try:
-                new_deposit = deposit_more(self.choice.cost - deposit)
-                if new_deposit == "q":
-                    return self.show_selection()
+                new_deposit = input(f"\nPlease insert ${self.choice['dispenser'].cost - deposit} to buy a {self.choice['item']}:  ")
+
+                # Cancel the purchase if customer choose to
+                if new_deposit[0].lower() == "q":
+                    print(f"\nCanceling your purchase for {self.choice['item']}")
+
+                    # Return the deposited money by the customer
+                    if deposit != 0:
+                        print(f"Here is the ${deposit:,.2f} you inserted")
+
+                    return self.program()
                 
-                deposit += int(new_deposit)
-            except KeyboardInterrupt:
-                sys.exit()
-            except:
-                print("Must deposit using positive integers. (Q - to cancel purchase)")
+                # Add the new deposit to total deposit
+                new_deposit = int(new_deposit)
+                if new_deposit > 0:
+                    deposit += new_deposit
+
+            # Inform customer if their deposit is invalid
+                else:
+                    print("Must deposit using positive integers. (Q - cancel purchase)")
+            except (ValueError, IndexError):
+                print("Must deposit using positive integers. (Q - cancel purchase)")
         
-        # TODO SELL PRODUCT
+        # Give the item if deposit is enough
+        self.choice["dispenser"].number_of_items -= 1
+        print(f"\nHere is your {self.choice['item']}! Enjoy!")
 
-        # TODO ACCEPT MONEY, RETURN IF THEIR IS CHANGE
+        # Register takes in the payment (not total deposit, just the price of item)
+        self.cash_register.cash_on_hand += self.choice["dispenser"].cost
 
+        # if there is change, return it
+        if  deposit != self.choice["dispenser"].cost:
+            print(f"Here also is your change of ${deposit - self.choice['dispenser'].cost}:,.2f")
 
-
-
-
-
-
+        # Asks customer if want to buy more
+        try:
+            if input("\nWould you like to purchase again? (y for yes):  ")[0].lower() == "y":
+                return self.program()
+        # Turn off the candy machine if customer will not buy anymore
+            else:
+                sys.exit("\n'My Candy Machine' is turning off")
+        except:
+            sys.exit("\n'My Candy Machine' is turning off")
 
 
     def show_selection(self):
-        """ displays the main menu, allow users to select and buy a product """
-        item_key = {"1": self.candy_dispenser, "2": self.chip_dispenser, "3": self.gum_dispenser, "4": self.cookie_dispenser, "Q": "exit"}
+        """ displays the main menu, allow users to select an item to buy """
 
-        print("\nWelcome to \nMy Candy Machine")
-        print("\nSelect an item to purchase by entering its value")
-        print("1 - Candy \n2 - Chip \n3 - Gum \n4 - Cookie \nQ - Exit")
-        choice = input("\nYour choice:  ")[0].upper() 
+        print("\nSelect an item to purchase by entering its corresponding value")
+        print("\n1 - Candy \n2 - Chip \n3 - Gum \n4 - Cookie \nQ - Exit")
+        self.choice = input("\nYour choice:  ")[0].upper() 
 
-        if not choice or choice not in item_key:
-            return self.show_selection()
-
-        if choice == "exit":
-            sys.exit("\n'My Candy Machine' is turning off")
-
-        else:
-            self.choice = item_key[choice]
-            return self.sell_product()
 
     
 
@@ -76,6 +124,7 @@ class Candy_Machine:
 
 
 class Cash_Register():
+    """ component of Candy Machine, handles money """
 
     def __init__(self, cash_on_hand=500):
         self.cash_on_hand = cash_on_hand
@@ -117,6 +166,7 @@ class Cash_Register():
 
 
 class Dispenser:
+    """ component of Candy Machine, handles product """
     def __init__(self, cost=50, number_of_items=50):
         self.cost = cost
         self.number_of_items = number_of_items
@@ -188,7 +238,9 @@ class Dispenser:
 
 c = Candy_Machine()
 
-c.candy_dispenser.number_of_items = 0
-c.show_selection()
+# c.candy_dispenser.number_of_items = 0
+# c.program()
+c.cash_register
+print(c.cash_register)
 # print(c)
 # print(c.cash_register)
